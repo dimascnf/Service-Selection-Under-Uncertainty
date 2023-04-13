@@ -2,7 +2,7 @@
 
 - Main: src/main/ArticleResults
 
--Instances: data/Instances/
+- Instances: data/Instances/
 
 - Exact Approach logs: data/Log/
 
