@@ -78,9 +78,9 @@ public Allocation ILSWithRestart(InstanceMatrix instance, int IT, double alpha, 
 		double getpMax, ProbabilityScenario pScenario, int i, int iT, PerturbationMode perturbationMode) {
 		if (perturbationMode == PerturbationMode.SWAP)
 			return perturbationSwap(bestAllocation, instance, getvMax, smax, getpMax, pScenario, i, iT);
-		else if (perturbationMode == PerturbationMode.GRANADE)
-			return perturbationGranade(bestAllocation, instance, getvMax, smax, getpMax, pScenario, i, iT); 
-		else return perturbationMove(bestAllocation, instance, getvMax, smax, getpMax, pScenario, i, iT);
+		else if (perturbationMode == PerturbationMode.MOVE)
+			return perturbationMove(bestAllocation, instance, getvMax, smax, getpMax, pScenario, i, iT);
+		return null;
 }
 	
 	public Allocation GreedyMinProbAllocation(InstanceMatrix instance, ProbabilityScenario pScenario) {
@@ -109,9 +109,6 @@ public Allocation ILSWithRestart(InstanceMatrix instance, int IT, double alpha, 
 
 		for (int i=0; i < IT; i++) {
 			
-			//if (i % 1000 == 0)
-				//System.out.println(i);
-			
 			Allocation improvedSolution = perturbation(bestAllocation, instance, instance.getvMax(), instance.getSmax(), instance.getpMax(), pScenario, i, IT, perturbationMode);
 			
 			Allocation improvedSolutionAfterLocalSearch = neighborhoodSearch(improvedSolution, instance, mode, h, instance.getvMax(), instance.getSmax(), instance.getpMax(), pScenario, condition, impMode);
@@ -124,34 +121,6 @@ public Allocation ILSWithRestart(InstanceMatrix instance, int IT, double alpha, 
 		}
 		
 		return bestAllocation;
-	}
-	
-	private Allocation perturbationGranade(Allocation improvedSolution, InstanceMatrix matrix, int vmax, int smax, double pmax,
-			ProbabilityScenario pScenario, int i, int IT) {
-		
-		int numberOfServices = improvedSolution.getAllocation().values().size();
-		
-		Service randomService = RandomUtil.getRandomService(numberOfServices);
-		
-		for (Iterator<Task> iterator = improvedSolution.getAllocation().keySet().iterator(); iterator.hasNext();) {
-			Task task= (Task) iterator.next();
-			if (improvedSolution.getAllocation().get(task).equals(randomService)) {
-				Service oldService = improvedSolution.getAllocation().get(task);
-				//passar o serviço da task e desconsiderar o serviço passado
-				Service newService = matrix.getServiceWithLowestProb(task.getTaskId());
-				//Service newService = matrix.getServiceWithLowestCost(task.getTaskId());
-				if (!newService.equals(oldService)) {
-					improvedSolution.replaceService(task, newService, matrix, "Swap");
-				boolean probResRequired = matrix.getServiceProb(newService.getServID()) > matrix.getServiceProb(oldService.getServID());
-				if (!validator.isFeasible(improvedSolution, matrix, vmax, smax, pmax, pScenario,probResRequired)) {
-					improvedSolution.replaceService(task, oldService, matrix, "Swap");
-					//j--;
-				}
-				}
-			}
-		}
-		
-		return improvedSolution;
 	}
 	
 	private Allocation perturbationSwap(Allocation improvedSolution, InstanceMatrix matrix, int vmax, int smax, double pmax,
@@ -197,10 +166,6 @@ public Allocation ILSWithRestart(InstanceMatrix instance, int IT, double alpha, 
 		
 		int numberOfTasks = improvedSolution.getAllocation().keySet().size();
 		
-		//System.out.println("BEFORE PERTURBATION: prob "+improvedSolution.getCurrentProb());
-		//System.out.println("BEFORE PERTURBATION: pmax "+matrix.getpMax());
-		
-		//variar nos experimentos
 		int l = (int) (6-(i/(IT*1.0))*5);
 		//int l = (int) (1+(i/(IT*1.0))*5);
 		//int l = 2;
@@ -222,9 +187,6 @@ public Allocation ILSWithRestart(InstanceMatrix instance, int IT, double alpha, 
 				j--;
 			}
 		}
-		
-		//System.out.println("AFTER PERTURBATION: prob "+improvedSolution.getCurrentProb());
-		//System.out.println("AFTER PERTURBATION: pmax "+matrix.getpMax());
 		
 		return improvedSolution;
 	}
@@ -260,18 +222,10 @@ public Allocation ILSWithRestart(InstanceMatrix instance, int IT, double alpha, 
 			if (cont > 3*numberOfTasks)
 				return ProbabilityBasedGreedyInitialSolution(instance, numberOfTasks, Vmax, Smax, Pmax, pScenario);
 		
-			//System.out.println("all.numberOfTasksAlloacted() "+ all.numberOfTasksAlloacted());
-		
-			//System.out.println("Allocation.size() "+all.numberOfTasksAlloacted());
-			//System.out.println("numberOfTasks "+numberOfTasks);
 			int randomTaskId = RandomUtil.getRandomTaskIDFromList(tasksToAllocate);
-			//System.out.println("Random Task ID: "+randomTaskId);
-			//System.out.println("TasksToAllocate: "+tasksToAllocate);
 			
 			double minCost = instance.getMinTaskCost(randomTaskId);
 			double maxCost = instance.getMaxTaskCost(randomTaskId);
-			
-			//double m = minCost + alpha*(maxCost - minCost);
 			
 			List<Service> restrictedCandidateServiceSet = instance.getServicesWithMaxCost(randomTaskId, minCost + alpha*(maxCost - minCost));
 			
@@ -282,18 +236,7 @@ public Allocation ILSWithRestart(InstanceMatrix instance, int IT, double alpha, 
 			
 			all.addTask(randomTask, randomService, instance);
 			
-			/*try {
-				Thread.sleep(900);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}*/
-			
-			//System.out.println("Task: "+randomTaskId);
-			//System.out.println("Service: "+randomService);
-			
 			boolean isFeasible = validator.isFeasible(all,instance,Vmax,Smax,Pmax,pScenario, true);
-			//System.out.println("isFeasible: "+isFeasible);
 			if (!isFeasible) {
 				all.removeTask(randomTask, instance);
 				tasksToAllocate.add(new Integer(randomTaskId));
@@ -310,8 +253,6 @@ public Allocation ILSWithRestart(InstanceMatrix instance, int IT, double alpha, 
 			int vmax, int smax, double pmax, ProbabilityScenario pScenario) {
 		
 		Allocation all = new Allocation();
-		
-		//System.out.println("CRIOU ProbabilityBasedGreedyInitialSolution");
 		
 		while (all.numberOfTasksAlloacted() < numberOfTasks) {
 			
@@ -344,45 +285,7 @@ public Allocation ILSWithRestart(InstanceMatrix instance, int IT, double alpha, 
 		
 		return all;
 	}
-
-	/*private Allocation ProbabilityBasedGreedyInitialSolution(InstanceMatrix instance, double alpha, int numberOfTasks,
-			int vmax, int smax, double pmax, ProbabilityScenario pScenario) {
-		
-		Allocation all = new Allocation();
-		
-		//System.out.println("CHAMOU ProbabilityBasedGreedyInitialSolution");
-		
-		while (all.numberOfTasksAlloacted() < numberOfTasks) {
-			
-			for (int iId=0; iId<numberOfTasks;iId++) {
-				Task task = new Task(iId, instance.getTaskConsumption(iId));
-				
-				List<Integer> orderedServiceIndexes = new ArrayList<Integer>();
-				
-				for (int i =0; i<instance.getNumberOfServices();i++)
-					orderedServiceIndexes.add(i);
-					
-				orderedServiceIndexes = sortServicesByProbability(orderedServiceIndexes,instance);
-				
-				//System.out.println("Allocating Task "+task.getTaskId()+" to Service "+(orderedServiceIndexes.get(0))+" (Minimum Probability Available)");
-				
-				do {
-					Service serviceWithMinimumProb = new Service(orderedServiceIndexes.get(0));
-					all.addTask(task, serviceWithMinimumProb, instance);
-					boolean isFeasible = validator.isFeasible(all,instance,instance.getvMax(),instance.getSmax(),instance.getpMax(),pScenario, true);
-					if (!isFeasible) {
-						all.removeTask(task, instance);
-						orderedServiceIndexes.remove(0);
-					}
-				} while (!all.getAllocation().containsKey(task));
-				//Repeat until the task is allocated
-			}
-			
-		}
-		
-		return all;
-	}*/
-
+	
 	private List<Integer> sortServicesByProbability(List<Integer> orderedServices, InstanceMatrix instance) {
 		int n = orderedServices.size(); 
 		for (int i = 0; i <n;i++) {
