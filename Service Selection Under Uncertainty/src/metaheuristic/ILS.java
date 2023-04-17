@@ -270,9 +270,6 @@ public Allocation ILSWithRestart(InstanceMatrix instance, int IT, double alpha, 
 					Service serviceWithMinimumProb = new Service(orderedServiceIndexes.get(0));
 					all.addTask(task, serviceWithMinimumProb, instance);
 					boolean isFeasible = validator.isFeasible(all,instance,instance.getvMax(),instance.getSmax(),instance.getpMax(),pScenario,true);
-					//System.out.println("Task "+task.getTaskId());
-					//System.out.println("Feasible "+isFeasible);
-					//System.out.println("orderedServiceIndexes.size() "+orderedServiceIndexes.size());
 					if (!isFeasible) {
 						all.removeTask(task, instance);
 						orderedServiceIndexes.remove(0);
