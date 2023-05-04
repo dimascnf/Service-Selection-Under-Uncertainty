@@ -12,7 +12,7 @@
 | :-----: | :---: | :---: | :-----: | :---: | :---: | 
 | Instance ID | [0,1] | Local Search or VND  | p, p_s or p_{t,s} | Swap or Move | Swap or Move |
 
-- **Execution Parameters**: Executions Per Instance,  ,  and  ()
+- **Execution Parameters**: 
 
 | Repetitions Per Instance | Optimal Execution Time Divisor | Number of Iterations | Number of Instances | 
 | :-----: | :---: | :---: | :-----: | 
